@@ -4,14 +4,19 @@ function FindData({findToggle,findAction,authService}) {
     let [findPw, setFindPw] = useinput("");
 
     const findPassword = useCallback((e)=>{
-        setFindPw(e.target.value)
+        setFindPw(e)
       },[setFindPw])
 
       async function resetpw(e) {
         e.preventDefault();
         if (findPw !== "") {
-          authService.sendPasswordResetEmail(findPw).then(() => {
+          await authService.sendPasswordResetEmail(findPw).then(() => {
             window.alert("입력하신 메일로 비밀번호 안내드렸습니다.");
+            findAction(!findToggle)
+          }).catch((error)=>{
+            if(error.massage === "There is no user record corresponding to this identifier. The user may have been deleted."){
+              window.alert("해당 이메일이 존재하지 않습니다")
+            }
           });
         }
       }

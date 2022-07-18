@@ -5,33 +5,11 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {BrowserRouter} from "react-router-dom"
 import {Provider} from 'react-redux';
-import {combineReducers, createStore} from "redux"
+import {applyMiddleware, createStore} from "redux"
+import logger from 'redux-logger';
+import reducer from "./module/reducer"
 
-let defaults= [];
-
-let displayNames = []
-
-function reducer(state = defaults, action){
-  if(action.type==="쿼리스트링보내기"){
-    let location = [...defaults]
-    location.push(action.payload)
-    return location
-  } else {
-    return state
-  }
-}
-
-function reducer2(state = displayNames, action2){
-  if(action2.type==="활동명"){
-    let names = [...displayNames]
-    names.push(action2.payload2)
-    return names
-  } else {
-    return state
-  }
-}
-
-let store = createStore(combineReducers({reducer,reducer2}))
+let store = createStore(reducer,applyMiddleware(logger))
 
 ReactDOM.render(
   <React.StrictMode>

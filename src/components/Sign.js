@@ -1,26 +1,29 @@
 import React, { useCallback, useState } from "react";
-import { authService } from "../Firebase";
 import { Link } from "react-router-dom";
 import "../asset/Sign.scss";
 import useinput from "./hook/UseInput";
 import FindData from "./FindData";
 import SocialSign from "./SocialSign";
-function Sign() {
+function Sign({ authService }) {
   const [id, setId] = useinput("");
   const [password, setPassword] = useinput("");
   const [findToggle, setFIndToggle] = useState(false);
 
-  const onchangeId = useCallback((e) => {
-    setId(e);
-   },[setId]
+  const onchangeId = useCallback(
+    (e) => {
+      setId(e);
+    },
+    [setId]
   );
 
-  const onchangePw = useCallback((e) => {
+  const onchangePw = useCallback(
+    (e) => {
       setPassword(e);
-    },[setPassword]
+    },
+    [setPassword]
   );
 
-  //리액트의 on 구분은 event 파라미터를 안넣줘도 자동적으로 붙음 
+  //리액트의 on 구분은 event 파라미터를 안넣줘도 자동적으로 붙음
 
   async function LoginLogic(e) {
     e.preventDefault();
@@ -51,8 +54,8 @@ function Sign() {
     }
   }
 
-  function findAction(findToggle){
-    setFIndToggle(findToggle)
+  function findAction(findToggle) {
+    setFIndToggle(findToggle);
   }
 
   return (
@@ -87,7 +90,10 @@ function Sign() {
         <div className="assistance">
           <button
             className="pw_reset ass_btn"
-            onClick={() => {setFIndToggle(!findToggle)}}>
+            onClick={() => {
+              setFIndToggle(!findToggle);
+            }}
+          >
             비밀번호 변경&amp;찾기
           </button>
           <button className="ass_auth ass_btn">
@@ -95,7 +101,13 @@ function Sign() {
           </button>
         </div>
       </div>
-      {findToggle ? <FindData findToggle={findToggle} findAction={findAction} authService={authService}/> : null}
+      {findToggle ? (
+        <FindData
+          findToggle={findToggle}
+          findAction={findAction}
+          authService={authService}
+        />
+      ) : null}
     </>
   );
 }
