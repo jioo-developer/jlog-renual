@@ -121,10 +121,19 @@
       }
 
       .check_text {
-        margin-left: 10px;
         color: #686868;
         font-size: 15px;
       }
     }
   }
+}
+
+.oncheck {
+  background-image: url("http://rlawlgh3687.dothome.co.kr/default.svg");
+  border: 0;
+}
+
+.offcheck {
+  background-image: none;
+  border: 1px solid #eee;
 }
