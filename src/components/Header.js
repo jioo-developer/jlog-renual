@@ -7,7 +7,6 @@ function Header() {
   const [navToggle, setNavToggle] = useState(false);
   const [lazyloading, setlazy] = useState(false);
   const propsNickName = useSelector((state) => state.nickname);
-  console.log(propsNickName);
   const navigate = useNavigate();
   function logout() {
     authService.signOut();
@@ -15,14 +14,16 @@ function Header() {
   }
 
   useEffect(() => {
-    setlazy(true);
-  }, 500);
+    setTimeout(() => {
+      setlazy(true);
+    }, 500);
+  }, []);
 
   return (
     <>
-      {lazyloading === true ? (
-        <>
-          <header>
+      <header>
+        {lazyloading === true ? (
+          <>
             <p className="title">
               <Link to="/">{propsNickName.displayName}.log</Link>
             </p>
@@ -35,24 +36,22 @@ function Header() {
               <img src={propsNickName.photoURL} alt="" className="profile" />
               <img src="./img/arrow.svg" alt="" className="arrow" />
             </div>
-          </header>
-          {navToggle ? (
-            <>
-              <ul className="sub_menu">
-                <li>
-                  <Link to="/profile">설정</Link>
-                </li>
-                <li>
-                  <Link to="notice">공지사항</Link>
-                </li>
-                <li onClick={logout}>로그아웃</li>
-              </ul>
-            </>
-          ) : null}
+          </>
+        ) : null}
+      </header>
+      {navToggle ? (
+        <>
+          <ul className="sub_menu">
+            <li>
+              <Link to="/profile">설정</Link>
+            </li>
+            <li>
+              <Link to="notice">공지사항</Link>
+            </li>
+            <li onClick={logout}>로그아웃</li>
+          </ul>
         </>
-      ) : (
-        "로그인 정보를 확인하고 있습니다"
-      )}
+      ) : null}
     </>
   );
 }

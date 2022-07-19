@@ -68,7 +68,7 @@ function Sign({ authService }) {
         <form onSubmit={LoginLogic} className="sign-form">
           <input
             type="text"
-            class="form-control"
+            className="form-control"
             name="id"
             placeholder="아이디"
             required

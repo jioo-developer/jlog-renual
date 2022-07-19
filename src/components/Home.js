@@ -19,6 +19,10 @@ function Home(props) {
     });
   }, []);
 
+  useEffect(() => {
+    console.log(posts);
+  }, [posts]);
+
   return (
     <div className="main">
       <div className="in_wrap">
