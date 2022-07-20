@@ -1,65 +1,20 @@
 import React, { useEffect, useState } from "react";
 import "../asset/profile.scss";
-import { authService, db, firebaseInstance, storageService } from "../Firebase";
-import { useHistory } from "react-router-dom";
+import { firebaseInstance } from "../Firebase";
 import Header from "./Header";
 import "../asset/header.scss";
 
-function Profile({ user, navigate }) {
-  let [file, setFile] = useState("");
-  let [title, setTitle] = useState("");
-  let [fileName, setFileName] = useState("");
-  let [NameEdit, setNameEdit] = useState(false);
-  let [uploadCheck, setUploadCheck] = useState(false);
-  let [deleteProfile, setDeleteProfile] = useState("");
-  let [preview, setpreview] = useState(false);
-  let profileUrl = "";
-  let userDelete = authService.currentUser;
+function Profile({ user, navigate, db, authService, storageService }) {
+  const userDelete = authService.currentUser;
+  const [NameEdit, setNameEdit] = useState(false);
+  const [uploadCheck, setUploadCheck] = useState(false);
+  const [file, setFile] = useState("");
+  const [title, setTitle] = useState("");
+  const commonObject = {};
 
   useEffect(() => {
     setTitle(user.displayName);
-    setDeleteProfile(user.photoURL);
   }, []);
-
-  async function onFileChange(e) {
-    setpreview(true);
-    setUploadCheck(true);
-    const theFile = e.target.files[0];
-    setFileName(theFile);
-    const reader = new FileReader();
-    reader.onloadend = (finished) => {
-      const {
-        currentTarget: { result },
-      } = finished;
-
-      setFile(result);
-    };
-    reader.readAsDataURL(theFile);
-  }
-
-  async function NameF() {
-    setNameEdit(!NameEdit);
-    await user.updateProfile({ displayName: title }).then(() => {
-      setNameEdit(!NameEdit);
-      window.alert("닉네임이 변경되었습니다");
-      navigate("/");
-    });
-  }
-
-  async function uploadEnd() {
-    const fileRef = storageService
-      .ref()
-      .child(`${title}-profileImg/${fileName.name}`);
-    const response = await fileRef.putString(file, "data_url");
-    profileUrl = await response.ref.getDownloadURL();
-
-    await user.updateProfile({ photoURL: profileUrl }).then(() => {
-      setpreview(false);
-      setUploadCheck(false);
-      window.alert("프로필 변경이 완료되었습니다.");
-      navigate("/");
-    });
-  }
 
   function deleteUser() {
     let pw = window.prompt("비밀번호를 입력해주세요");
@@ -78,9 +33,55 @@ function Profile({ user, navigate }) {
     });
   }
 
+  function onFileChange(e) {
+    const theFile = e.target.files[0];
+    setUploadCheck(!uploadCheck);
+    const reader = new FileReader();
+    reader.readAsDataURL(theFile);
+    return new Promise(function (res) {
+      reader.onloadend = (e) => {
+        let copyObject = { ...commonObject };
+        copyObject.image = e.target.result;
+        copyObject.file = theFile;
+        res(copyObject);
+      };
+    })
+      .then((result) => {
+        setFile(result.image);
+        return result;
+      })
+      .then((result) => {
+        ImgUpload(result);
+      });
+  }
+
+  async function ImgUpload(parmas) {
+    const fileRef = storageService
+      .ref()
+      .child(`${title}-profile/${parmas.file.name}`);
+    const response = await fileRef.putString(parmas.image, "data_url");
+    const profileUrl = await response.ref.getDownloadURL();
+
+    await user.updateProfile({ photoURL: profileUrl }).then(() => {
+      setUploadCheck(!uploadCheck);
+      window.alert("프로필 변경이 완료되었습니다.");
+    });
+  }
+
+  async function NickNameChange() {
+    if (NameEdit === false) {
+      setNameEdit(!NameEdit);
+    } else {
+      await user.updateProfile({ displayName: title }).then(() => {
+        setNameEdit(!NameEdit);
+        window.alert("닉네임이 변경되었습니다");
+      });
+    }
+  }
+
   return (
     <div className="profile_wrap">
-      <Header />
+      <Header user={user} />
       <section className="content">
         <div className="profile_area">
           <div className="img_wrap">
@@ -91,21 +92,15 @@ function Profile({ user, navigate }) {
               onChange={onFileChange}
             />
             <figure className="profileImg">
-              {preview ? (
+              {uploadCheck ? (
                 <img src={file} width="130px" height="135px" />
               ) : (
                 <img src={user.photoURL} width="130px" height="135px" />
               )}
             </figure>
-            {uploadCheck ? (
-              <div className="uploads btn" onClick={uploadEnd}>
-                바꾸기 완료
-              </div>
-            ) : (
-              <label htmlFor="img_check" className="uploads btn">
-                이미지 업로드
-              </label>
-            )}
+            <label htmlFor="img_check" className="uploads btn">
+              이미지 업로드
+            </label>
           </div>
           <div className="name_area">
             {NameEdit ? (
@@ -119,16 +114,11 @@ function Profile({ user, navigate }) {
               <b className="nickname">{user.displayName}</b>
             )}
             {NameEdit ? (
-              <button className="btn comment_btn" onClick={NameF}>
+              <button className="btn comment_btn" onClick={NickNameChange}>
                 수정완료
               </button>
             ) : (
-              <button
-                className="btn comment_btn"
-                onClick={() => {
-                  setNameEdit(true);
-                }}
-              >
+              <button className="btn comment_btn" onClick={NickNameChange}>
                 닉네임 수정
               </button>
             )}

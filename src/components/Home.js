@@ -1,34 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { db } from "../Firebase";
 import "../asset/home.scss";
 import "../asset/header.scss";
 import Header from "./Header";
-function Home(props) {
-  let [posts, setPosts] = useState([]);
-  let user = props.user;
+function Home({ user }) {
   let order;
-
-  useEffect(() => {
-    db.collection("post").onSnapshot((snapshot) => {
-      let postArray = snapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      setPosts(postArray);
-    });
-  }, []);
-
-  useEffect(() => {
-    console.log(posts);
-  }, [posts]);
 
   return (
     <div className="main">
       <div className="in_wrap">
-        <Header />
+        <Header user={user} />
         <section className="post_section">
-          {/* {posts.map(function (post, i) {
+          {posts.map(function (post, i) {
             return (
               <>
                 <Link
@@ -39,7 +23,7 @@ function Home(props) {
                     })
                   }
                 >
-                  <div className="post">
+                  <div className="post" key={i}>
                     <figure className="thumbnail">
                       {post.url === "" ? (
                         <img src="./img/no-image.jpg" alt="" height="200px" />
@@ -53,7 +37,7 @@ function Home(props) {
                       <p className="post_date">{post.date}</p>
                     </div>
                     <div className="writer_wrap">
-                      <div className="id">
+                      <div className="id writter-id">
                         <img src={post.profile} alt="" className="profile" />
                         <p className="profile_id">{post.user}</p>
                       </div>
@@ -63,7 +47,7 @@ function Home(props) {
                 </Link>
               </>
             );
-          })} */}
+          })}
         </section>
         <button className="new-post">
           <Link to="/upload">

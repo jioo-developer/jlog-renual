@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { db, storageService } from "../Firebase";
 import "../asset/detail.scss";
 import Header from "./Header";
-import { connect } from "react-redux";
 import TextareaAutosize from "react-textarea-autosize";
 function Detail({ user, navigate, dispatch }) {
   let [posts, setPosts] = useState([]);
@@ -190,7 +189,7 @@ function Detail({ user, navigate, dispatch }) {
 
   return (
     <div className="detail_wrap">
-      <Header />
+      <Header user={user} />
       <div className="in_wrap">
         <section className="sub_header">
           <h1>{posts.title}</h1>

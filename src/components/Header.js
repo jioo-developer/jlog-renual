@@ -2,30 +2,28 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { authService } from "../Firebase";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-function Header() {
+function Header({ user }) {
   const [navToggle, setNavToggle] = useState(false);
   const [lazyloading, setlazy] = useState(false);
-  const propsNickName = useSelector((state) => state.nickname);
   const navigate = useNavigate();
   function logout() {
     authService.signOut();
-    navigate("/");
+    navigate.push("/");
   }
 
   useEffect(() => {
     setTimeout(() => {
       setlazy(true);
-    }, 500);
+    }, 800);
   }, []);
 
   return (
     <>
       <header>
-        {lazyloading === true ? (
+        {lazyloading ? (
           <>
             <p className="title">
-              <Link to="/">{propsNickName.displayName}.log</Link>
+              <Link to="/">{user.displayName}.log</Link>
             </p>
             <div
               className="menu"
@@ -33,20 +31,19 @@ function Header() {
                 setNavToggle(!navToggle);
               }}
             >
-              <img src={propsNickName.photoURL} alt="" className="profile" />
+              <img src={user.photoURL} alt="" className="profile" />
               <img src="./img/arrow.svg" alt="" className="arrow" />
             </div>
           </>
-        ) : null}
+        ) : (
+          "로그인정보를 가져오는중..."
+        )}
       </header>
       {navToggle ? (
         <>
           <ul className="sub_menu">
             <li>
               <Link to="/profile">설정</Link>
-            </li>
-            <li>
-              <Link to="notice">공지사항</Link>
             </li>
             <li onClick={logout}>로그아웃</li>
           </ul>

@@ -1,94 +1,22 @@
 import React, { useEffect, useState } from "react";
 import "../asset/upload.scss";
-import { db, storageService } from "../Firebase";
 import TextareaAutosize from "react-textarea-autosize";
-function Upload({ user, navigate }) {
-  let [title, setTitle] = useState("");
-  let [posts, setPosts] = useState([]);
-  let [textarea, setTextarea] = useState("");
-  let attchmentUrl = [];
-  let time = new Date();
-  let year = time.getFullYear();
-  let month = time.getMonth() + 1;
-  let day = time.getDate();
-  let max = 10000;
-  let [preview, setPreview] = useState([]);
-  let [filename, setFileName] = useState([]);
-  let array = [];
+import UseInput from "./hook/UseInput";
+function Upload({ db, storageService, user, navigate }) {
+  const [title, setTitle] = UseInput("");
+  const [posts, setPosts] = useState([]);
+  const [textarea, setTextarea] = UseInput("");
+  const [preview, setPreview] = useState([]);
+  const [filename, setFileName] = useState([]);
 
-  useEffect(() => {
-    db.collection("post").onSnapshot((snapshot) => {
-      let postArray = snapshot.docs.map((doc) => ({
-        ...doc.data(),
-      }));
-      setPosts(postArray);
-    });
-  }, []);
+  const timeData = {
+    time: new Date(),
+    year: time.getFullYear(),
+    month: time.getMonth() + 1,
+    day: time.getDate(),
+  };
 
-  function onFileChange(e) {
-    let files = Array.from(e.target.files);
-    setFileName(files);
-    for (var i = 0; i < files.length; i++) {
-      const reader = new FileReader();
-      if (files) {
-        reader.readAsDataURL(files[i]);
-      }
-
-      reader.onload = async (e) => {
-        array.push(e.target.result);
-        let copyPreview = [...preview];
-        await copyPreview.push(...array);
-        setPreview(copyPreview);
-      };
-    }
-  }
-
-  async function post(e) {
-    e.preventDefault();
-    if (preview.length !== 0) {
-      for (var i = 0; i < preview.length; i++) {
-        const fileRef = storageService
-          .ref()
-          .child(`${user.displayName}/${filename[i].name}`);
-        const response = await fileRef.putString(preview[i], "data_url");
-        attchmentUrl.push(await response.ref.getDownloadURL());
-      }
-    }
-
-    const content = {
-      title: title,
-      text: textarea,
-      user: user.displayName,
-      writer: user.uid,
-      date: `${year}년${month}월${day}일`,
-      url: attchmentUrl.length === 0 ? "" : attchmentUrl,
-      favorite: 0,
-      profile: user.photoURL,
-      fileName:
-        filename.length === 0
-          ? ""
-          : filename.map(function (a, i) {
-              return filename[i].name;
-            }),
-      order: max - posts.length - 1,
-    };
-    await db
-      .collection("post")
-      .add(content)
-      .then(() => {
-        window.alert("포스트가 업로드 되었습니다.");
-        navigate("/");
-      });
-  }
-
-  function reset() {
-    document.querySelector("#title").value = "";
-    document.querySelector(".text").value = "";
-    document.querySelector(".file-form").value = null;
-    setTimeout(() => {
-      setPreview(null);
-    }, 1000);
-  }
+  const maxPost = 10000;
 
   return (
     <div className="upload">
