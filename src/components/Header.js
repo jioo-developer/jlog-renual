@@ -8,13 +8,13 @@ function Header({ user }) {
   const navigate = useNavigate();
   function logout() {
     authService.signOut();
-    navigate.push("/");
+    navigate("/");
   }
 
   useEffect(() => {
     setTimeout(() => {
       setlazy(true);
-    }, 800);
+    }, 100);
   }, []);
 
   return (

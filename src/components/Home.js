@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { db } from "../Firebase";
 import "../asset/home.scss";
 import "../asset/header.scss";
 import Header from "./Header";
+import { useSelector } from "react-redux";
 function Home({ user }) {
   let order;
-
+  const posts = useSelector((state) => state.posts);
   return (
     <div className="main">
       <div className="in_wrap">
@@ -16,14 +16,16 @@ function Home({ user }) {
             return (
               <>
                 <Link
-                  to={`/detail?id=${post.id}`}
+                  to={`/detail?id=${post.pageId}`}
+                  state={{ pageId: post.pageId }}
                   style={
                     (order = {
                       order: post.order,
                     })
                   }
+                  key={i}
                 >
-                  <div className="post" key={i}>
+                  <div className="post">
                     <figure className="thumbnail">
                       {post.url === "" ? (
                         <img src="./img/no-image.jpg" alt="" height="200px" />

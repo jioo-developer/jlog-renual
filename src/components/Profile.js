@@ -37,7 +37,9 @@ function Profile({ user, navigate, db, authService, storageService }) {
     const theFile = e.target.files[0];
     setUploadCheck(!uploadCheck);
     const reader = new FileReader();
-    reader.readAsDataURL(theFile);
+    if (theFile) {
+      reader.readAsDataURL(theFile);
+    }
     return new Promise(function (res) {
       reader.onloadend = (e) => {
         let copyObject = { ...commonObject };
@@ -65,6 +67,7 @@ function Profile({ user, navigate, db, authService, storageService }) {
     await user.updateProfile({ photoURL: profileUrl }).then(() => {
       setUploadCheck(!uploadCheck);
       window.alert("프로필 변경이 완료되었습니다.");
+      navigate("/");
     });
   }
 
@@ -93,9 +96,9 @@ function Profile({ user, navigate, db, authService, storageService }) {
             />
             <figure className="profileImg">
               {uploadCheck ? (
-                <img src={file} width="130px" height="135px" />
+                <img src={file} width="130px" height="135px" alt="" />
               ) : (
-                <img src={user.photoURL} width="130px" height="135px" />
+                <img src={user.photoURL} width="130px" height="135px" alt="" />
               )}
             </figure>
             <label htmlFor="img_check" className="uploads btn">

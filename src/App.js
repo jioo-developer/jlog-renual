@@ -10,11 +10,11 @@ import Profile from "./components/Profile";
 import Edit from "./components/Edit";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { PostLoad } from "./module/reducer";
 function App() {
   const [init, setInit] = useState(false);
   const [Login, setLogin] = useState(false);
   const [userObj, setUserObj] = useState(null);
-  let [posts, setPosts] = useState([]);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   useEffect(() => {
@@ -35,7 +35,7 @@ function App() {
         ...doc.data(),
         id: doc.id,
       }));
-      setPosts(postArray);
+      dispatch(PostLoad(postArray));
     });
   }, []);
 
@@ -65,6 +65,8 @@ function App() {
                     user={userObj}
                     navigate={navigate}
                     dispatch={dispatch}
+                    db={db}
+                    storageService={storageService}
                   />
                 }
               />

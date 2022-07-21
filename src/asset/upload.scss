@@ -112,39 +112,32 @@
     justify-content: space-between;
     padding-bottom: 20px;
 
-    .cancel_wrap {
-      display: flex;
-      margin-left: auto;
+    .post {
+      @include btn();
       width: 112px;
-      height: auto;
-      justify-content: space-between;
+      height: 45px;
+      background: rgb(32, 201, 151);
+      color: #fff;
 
-      .post {
-        @include btn();
-        width: 112px;
-        height: 45px;
-        background: rgb(32, 201, 151);
-        color: #fff;
-
-        @media #{$breakpoint-mobile} {
-          width: 70%;
-        }
-      }
-
-      .none_text {
-        background: gray;
-        text-align: center;
-        line-height: 45px;
-      }
-
-      .delete {
-        @extend .post;
-        background: rgb(241, 243, 245);
-        color: #333;
-        text-align: center;
-        line-height: 45px;
+      @media #{$breakpoint-mobile} {
+        width: 70%;
       }
     }
+
+    .none_text {
+      background: gray;
+      text-align: center;
+      line-height: 45px;
+    }
+
+    .delete {
+      @extend .post;
+      background: rgb(241, 243, 245);
+      color: #333;
+      text-align: center;
+      line-height: 45px;
+    }
+
     .exit {
       @include btn-Reset();
       color: #666;

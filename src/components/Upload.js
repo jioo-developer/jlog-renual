@@ -1,22 +1,139 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "../asset/upload.scss";
 import TextareaAutosize from "react-textarea-autosize";
 import UseInput from "./hook/UseInput";
+import { useSelector } from "react-redux";
 function Upload({ db, storageService, user, navigate }) {
   const [title, setTitle] = UseInput("");
-  const [posts, setPosts] = useState([]);
   const [textarea, setTextarea] = UseInput("");
+  const [fileData, setFileData] = useState("");
   const [preview, setPreview] = useState([]);
-  const [filename, setFileName] = useState([]);
+  const [pageId, setPageId] = useState("");
+  const posts = useSelector((state) => state.posts);
+  let array,
+    imageArray = [];
+
+  const time = new Date();
 
   const timeData = {
-    time: new Date(),
     year: time.getFullYear(),
     month: time.getMonth() + 1,
     day: time.getDate(),
   };
 
   const maxPost = 10000;
+
+  const TitleHandler = useCallback(
+    (e) => {
+      setTitle(e);
+    },
+    [setTitle]
+  );
+
+  const textHandler = useCallback(
+    (e) => {
+      setTextarea(e);
+    },
+    [setTextarea]
+  );
+
+  function onFileChange(e) {
+    const files = Array.from(e.target.files);
+    if (files) {
+      setFileData(files);
+      const reader = new FileReader();
+      for (var i = 0; i < files.length; i++) {
+        reader.readAsDataURL(files[i]);
+        return new Promise(function (res) {
+          reader.onload = (e) => {
+            const copyArray = [...array];
+            copyArray.push(e.target.result);
+            const copyPreview = [...preview];
+            copyPreview.push(...copyArray);
+            res(copyPreview);
+          };
+        }).then((result) => {
+          setPreview(result);
+        });
+      }
+    }
+  }
+
+  async function post(e) {
+    e.preventDefault(e);
+    if (title !== "" && textarea !== "") {
+      if (preview.length !== 0) {
+        for (var i = 0; i < preview.length; i++) {
+          const fileRef = storageService
+            .ref()
+            .child(`${user.displayName}/${fileData[i].name}`);
+          const response = await fileRef.putString(preview[i], "data_url");
+          const result = await response.ref.getDownloadURL();
+          imageArray.push(result);
+        }
+      }
+      //이미지 부분
+      console.log(pageId);
+      const content = {
+        title: title,
+        text: textarea,
+        user: user.displayName,
+        writer: user.uid,
+        date: `${timeData.year}년 ${timeData.month}월 ${timeData.day}일`,
+        url: imageArray.length === 0 ? "" : imageArray,
+        favorite: 0,
+        pageId: pageId,
+        profile: user.photoURL,
+        fileName:
+          fileData.length === 0
+            ? ""
+            : fileData.map((value, index) => {
+                return fileData[index].name;
+              }),
+        order: maxPost - posts.length - 1,
+      };
+      console.log(pageId);
+
+      await db
+        .collection("post")
+        .doc(pageId)
+        .set(content)
+        .then(() => {
+          window.alert("포스트가 업로드 되었습니다.");
+          const redirect = `/detail?id=${pageId}`;
+          navigate(redirect);
+        });
+    } else {
+      window.alert("제목과 내용을 다 입력하셨는지 확인해주세요");
+    }
+  }
+
+  const generateRandomString = (num) => {
+    const words = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    let result = "";
+    for (var i = 0; i < num; i++) {
+      result += words.charAt(Math.floor(Math.random() * words.length));
+    }
+    return result;
+  };
+
+  function overlap(params) {
+    const result = posts.some((item) => {
+      return item.id === params;
+    });
+    return result;
+  }
+
+  useEffect(() => {
+    let randomStr = generateRandomString(20);
+    overlap(randomStr);
+    if (overlap(randomStr)) {
+      randomStr = generateRandomString(20);
+      setPageId(randomStr);
+    } else {
+      setPageId(randomStr);
+    }
+  }, []);
 
   return (
     <div className="upload">
@@ -27,22 +144,23 @@ function Upload({ db, storageService, user, navigate }) {
           id="title"
           placeholder="제목을 입력하세요."
           maxLength={120}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => TitleHandler(e)}
         />
         <div className="textarea">
           <TextareaAutosize
             cacheMeasurements
-            contenteditable="true"
-            onHeightChange={(height) => console.log(height)}
+            // contentEditable="true"
+            onHeightChange={(height) => {}}
             className="text"
             placeholder="당신의 이야기를 적어보세요."
-            onChange={(e) => setTextarea(e.target.value)}
+            onChange={(e) => textHandler(e)}
           />
           <figure>
-            {preview &&
-              preview.map(function (url, i) {
-                return <img src={url} alt="" className="att" key={i}></img>;
-              })}
+            {preview.length !== 0
+              ? preview.map(function (url, i) {
+                  return <img src={url} alt="" className="att" key={i}></img>;
+                })
+              : null}
           </figure>
         </div>
         <input
@@ -56,7 +174,9 @@ function Upload({ db, storageService, user, navigate }) {
         <label htmlFor="image" className="Attachment image-att">
           이미지를 담아주세요
         </label>
-        <p className="warnning">※ 이미지를 한번에 업로드 해주세요. (하나씩X)</p>
+        <p className="warnning">
+          ※ 이미지를 한번에 업로드 해주세요. (하나씩 업로드하면 오류납니다)
+        </p>
         <div className="bottom_wrap">
           <div
             className="exit"
@@ -66,22 +186,9 @@ function Upload({ db, storageService, user, navigate }) {
           >
             ← &nbsp;나가기
           </div>
-          <div className="cancel_wrap">
-            {title !== "" && textarea !== "" ? (
-              <button type="submit" className="post" onClick={reset}>
-                글작성
-              </button>
-            ) : (
-              <div
-                className="none_text post"
-                onClick={() => {
-                  window.alert("제목과 내용을 다 입력하셨는지 확인해주세요");
-                }}
-              >
-                글작성
-              </div>
-            )}
-          </div>
+          <button type="submit" className="post">
+            글작성
+          </button>
         </div>
       </form>
     </div>

@@ -1,42 +1,38 @@
 import React, { useEffect, useState } from "react";
-import { db, storageService } from "../Firebase";
-import "../asset/detail.scss";
+import { useSelector } from "react-redux";
 import Header from "./Header";
+import "../asset/detail.scss";
+import { useLocation } from "react-router-dom";
 import TextareaAutosize from "react-textarea-autosize";
-function Detail({ user, navigate, dispatch }) {
-  let [posts, setPosts] = useState([]);
-  let [favoriteBtn, setFavoriteBtn] = useState(false);
-  let 쿼리스트링 = new URLSearchParams(window.location.search);
-  let [reply, setreply] = useState([]);
-  let [comment, setcomment] = useState("");
-  var uid = user.displayName;
-  let time = new Date();
-  let year = time.getFullYear();
-  let month = time.getMonth() + 1;
-  let day = time.getDate();
-  let locations = 쿼리스트링.get("id");
-  let [fileNamed, setFileNamed] = useState("");
-  let [commentChange, setCommentChange] = useState(false);
-  let [newComment, setNewComment] = useState("");
-  let [mapData, setMapdata] = useState([]);
+import UseInput from "./hook/UseInput";
+function Detail({ user, navigate, dispatch, db, storageService }) {
+  const location = useLocation();
+  const URLID = location.state.pageId;
+  const [pageData, setPageData] = useState([]);
+  const [FavoriteBtn, setFavoriteBtn] = useState(false);
+  const [reply, setReply] = useState("");
+  const [comment, setcomment] = UseInput("");
+  const [fileNamed, setFileNamed] = useState();
+  const [commentChange, setCommentChange] = useState(false);
+  const [newComment, setNewComment] = UseInput("");
+  const [imgLazy, setImageLazy] = useState(false);
   let clientWidths;
   let naturalWidths;
-  let [imgLazy, setImgLazy] = useState(false);
 
-  function setCookie(name, value, expiredays) {
-    let today = new Date();
-    today.setDate(today.getDate() + expiredays);
-    document.cookie = `${name} = ${escape(
-      value
-    )}; expires =${today.toUTCString()};`;
-  }
+  const time = new Date();
+
+  const timeData = {
+    year: time.getFullYear(),
+    month: time.getMonth() + 1,
+    day: time.getDate(),
+  };
 
   useEffect(() => {
     db.collection("post")
-      .doc(쿼리스트링.get("id"))
+      .doc(URLID)
       .onSnapshot((snapshot) => {
         let postArray = { ...snapshot.data() };
-        setPosts(postArray);
+        setPageData(postArray);
       });
     let cookieCheck = document.cookie;
     if (cookieCheck === "Cookie=done") {
@@ -44,51 +40,33 @@ function Detail({ user, navigate, dispatch }) {
     } else {
       setFavoriteBtn(false);
     }
+    //본문
 
+    //리플
     db.collection("post")
-      .doc(쿼리스트링.get("id"))
+      .doc(URLID)
       .collection("reply")
       .onSnapshot((replys) => {
         let replyArray = replys.docs.map((doc) => ({
           ...doc.data(),
           id: doc.id,
         }));
-        setreply(replyArray);
+        setReply(replyArray);
       });
   }, []);
 
-  useEffect(() => {
-    setFileNamed(posts.fileName);
-    let copyMapData = [...mapData];
-    if (posts.url !== undefined) {
-      copyMapData.push(...posts.url);
-    }
-    setMapdata(copyMapData);
-  }, [posts]);
-
-  useEffect(() => {
-    setTimeout(() => {
-      let imgTarget = Array.from(document.getElementsByClassName("att"));
-      let grid = document.getElementsByClassName("grid");
-      imgTarget.map(function (a, i) {
-        naturalWidths = document.getElementsByClassName("att")[i].naturalWidth;
-        clientWidths = document.getElementsByClassName("att")[i].offsetWidth;
-        if (naturalWidths < clientWidths) {
-          imgTarget[i].classList.add("natural-size");
-        } else {
-          imgTarget[i].classList.add("full-size");
-        }
-      });
-      if (imgTarget.length > 1) {
-        grid[0].classList.add("grids");
-      }
-    }, 500);
-  }, []);
+  function setCookie(name, value, expiredays) {
+    time.setDate(time.getDate() + expiredays);
+    document.cookie = `${name} = ${escape(
+      value
+    )}; expires =${time.toUTCString()};`;
+  }
 
   async function onDelete(e) {
     e.preventDefault();
     const ok = window.confirm("정말 삭제 하시겠습니까?");
-    let locate = db.collection("post").doc(쿼리스트링.get("id"));
+    let locate = db.collection("post").doc(URLID);
+    let storageRef = storageService.ref();
     if (ok) {
       reply.map(function (a, i) {
         locate.collection("reply").doc(reply[i].id).delete();
@@ -96,125 +74,38 @@ function Detail({ user, navigate, dispatch }) {
       await locate.delete().then(() => {
         navigate("/");
       });
-      let storageRef = storageService.ref();
       if (fileNamed !== "") {
         fileNamed.map(function (a, i) {
-          let imagesRef = storageRef.child(`${posts.user}/${fileNamed[i]}`);
+          let imagesRef = storageRef.child(`${pageData.user}/${fileNamed[i]}`);
           imagesRef.delete();
         });
       }
     }
   }
 
-  async function commentUpload(e) {
-    e.preventDefault();
-    var comment_content = {
-      replyrer: uid,
-      comment: comment,
-      date: `${year}년${month}월${day}일`,
-      profile: user.photoURL,
-      uids: user.uid,
-    };
-    if (comment_content.comment === "") {
-      window.alert("댓글을 입력해주세요");
-    } else {
-      await db
-        .collection("post")
-        .doc(locations)
-        .collection("reply")
-        .add(comment_content)
-        .then(() => {
-          window.alert("댓글을 달았습니다.");
-          document.querySelector(".comment_input").value = "";
-        });
+  useEffect(() => {
+    if (pageData.length !== 0) {
+      setFileNamed(pageData.fileName);
     }
-  }
-
-  function edit_reply(e) {
-    setCommentChange(true);
-    let btn = e.target.getAttribute("data-index");
-    let tests = Array.from(document.querySelectorAll(".reply_text"));
-    tests.forEach((index) => {
-      var indexData = index.getAttribute("data-index");
-      if (btn === indexData) {
-        document.querySelector(`.reply_text${indexData}`).classList.add("none");
-        document
-          .querySelector(`.reply_input${indexData}`)
-          .classList.add("block");
-      }
-    });
-  }
-
-  function edit_end(e) {
-    setCommentChange(false);
-    let btn = e.target.getAttribute("data-index");
-    let inputs = Array.from(document.querySelectorAll(".reply_input"));
-    inputs.map(function (a, i) {
-      var indexInput = a.getAttribute("data-index");
-      if (btn === indexInput) {
-        document.querySelector(`.reply_text${i}`).classList.remove("none");
-        document.querySelector(`.reply_input${i}`).classList.remove("block");
-        var indexID = document
-          .querySelector(`.reply_input${i}`)
-          .getAttribute("data-id");
-        db.collection("post")
-          .doc(locations)
-          .collection("reply")
-          .doc(indexID)
-          .update({ comment: newComment });
-      }
-    });
-  }
-
-  function reply_delete(e) {
-    let btn = e.target.getAttribute("data-index");
-    let deletes = Array.from(document.querySelectorAll(".reply_text"));
-    deletes.map(function (a, i) {
-      var deleteIndex = a.getAttribute("data-index");
-      if (btn === deleteIndex) {
-        var deleteID = document
-          .querySelector(`.reply_text${i}`)
-          .getAttribute("data-id");
-        const ok = window.confirm("정말 삭제 하시겠습니까?");
-        if (ok) {
-          db.collection("post")
-            .doc(locations)
-            .collection("reply")
-            .doc(deleteID)
-            .delete();
-        }
-      }
-    });
-  }
+  }, [pageData]);
 
   return (
     <div className="detail_wrap">
       <Header user={user} />
       <div className="in_wrap">
         <section className="sub_header">
-          <h1>{posts.title}</h1>
+          <h1>{pageData.title}</h1>
           <div className="writer_wrap">
             <div className="left_wrap">
-              <img src={posts.profile} alt="" className="profile" />
-              <p className="writer">{posts.user}</p>
-              <p className="date">{posts.date}</p>
+              <img src={pageData.profile} alt="" className="profile" />
+              <p className="writer">{pageData.user}</p>
+              <p className="date">{pageData.date}</p>
             </div>
-            {user.uid === posts.writer ||
-            user.uid === "Qzq3BAJaw5doQk1Xjbvvu376iRn1" ? (
+            {user.uid === pageData.writer ||
+            user.uid === "Lon5eQWCvHP8ZbwYZ4KHQYanV442" ? (
               <>
                 <div className="right_wrap">
-                  <button
-                    className="edit"
-                    onClick={() => {
-                      dispatch({
-                        type: "쿼리스트링보내기",
-                        payload: locations,
-                      });
-                      navigate("/edit");
-                    }}
-                  >
-                    수정
-                  </button>
+                  <button className="edit">수정</button>
                   <button className="delete" onClick={onDelete}>
                     삭제
                   </button>
@@ -224,15 +115,15 @@ function Detail({ user, navigate, dispatch }) {
           </div>
         </section>
         <section className="content_wrap">
-          <pre className="text">{posts.text}</pre>
+          <pre className="text">{pageData.text}</pre>
           <div className="grid">
-            {mapData
+            {/* {mapData
               .filter((value, idx, arr) => {
                 return arr.findIndex((item) => item === value) === idx;
               })
               .map(function (url, i) {
                 return <img src={url} className="att" alt="" key={i} />;
-              })}
+              })} */}
           </div>
           <div className="comment">
             <div className="favorite_wrap">
@@ -240,33 +131,33 @@ function Detail({ user, navigate, dispatch }) {
               <input
                 type="checkbox"
                 id="favorite_check"
-                onClick={(e) => {
-                  if (e.target.checked) {
-                    db.collection("post")
-                      .doc(쿼리스트링.get("id"))
-                      .update({
-                        favorite: posts.favorite + 1,
-                      })
-                      .then(() => {
-                        setCookie("Cookie", "done", 1);
-                        setFavoriteBtn(true);
-                      });
-                  }
-                }}
+                // onClick={(e) => {
+                //   if (e.target.checked) {
+                //     db.collection("post")
+                //       .doc(쿼리스트링.get("id"))
+                //       .update({
+                //         favorite: pageData.favorite + 1,
+                //       })
+                //       .then(() => {
+                //         setCookie("Cookie", "done", 1);
+                //         setFavoriteBtn(true);
+                //       });
+                //   }
+                // }}
               />
-              {favoriteBtn !== true ? (
+              {/* {favoriteBtn !== true ? (
                 <>
                   <label htmlFor="favorite_check" className="favorite_btn">
-                    <span>👍</span>추천&nbsp;{posts.favorite}
+                    <span>👍</span>추천&nbsp;{pageData.favorite}
                   </label>
                 </>
               ) : (
                 <div className="favorite_btn">
-                  <span>👍</span>추천&nbsp;{posts.favorite}
+                  <span>👍</span>추천&nbsp;{pageData.favorite}
                 </div>
-              )}
+              )} */}
             </div>
-            {reply.map(function (com, i) {
+            {/* {reply.map(function (com, i) {
               return (
                 <>
                   <div className="reply_wrap">
@@ -327,8 +218,8 @@ function Detail({ user, navigate, dispatch }) {
                   </div>
                 </>
               );
-            })}
-            <form onSubmit={commentUpload}>
+            })} */}
+            {/* <form onSubmit={commentUpload}>
               <TextareaAutosize
                 cacheMeasurements
                 onHeightChange={(height) => ""}
@@ -337,7 +228,7 @@ function Detail({ user, navigate, dispatch }) {
                 onChange={(e) => setcomment(e.target.value)}
               />
               <button className="btn">댓글 작성</button>
-            </form>
+            </form> */}
           </div>
         </section>
       </div>
