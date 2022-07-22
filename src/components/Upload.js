@@ -10,8 +10,8 @@ function Upload({ db, storageService, user, navigate }) {
   const [preview, setPreview] = useState([]);
   const [pageId, setPageId] = useState("");
   const posts = useSelector((state) => state.posts);
-  let array,
-    imageArray = [];
+  let SaveArray = [];
+  let imageArray = [];
 
   const time = new Date();
 
@@ -39,22 +39,14 @@ function Upload({ db, storageService, user, navigate }) {
 
   function onFileChange(e) {
     const files = Array.from(e.target.files);
-    if (files) {
+    if (files.length !== 0) {
       setFileData(files);
-      const reader = new FileReader();
       for (var i = 0; i < files.length; i++) {
+        const reader = new FileReader();
         reader.readAsDataURL(files[i]);
-        return new Promise(function (res) {
-          reader.onload = (e) => {
-            const copyArray = [...array];
-            copyArray.push(e.target.result);
-            const copyPreview = [...preview];
-            copyPreview.push(...copyArray);
-            res(copyPreview);
-          };
-        }).then((result) => {
-          setPreview(result);
-        });
+        reader.onload = (e) => {
+          SaveArray.push(e.target.result);
+        };
       }
     }
   }
@@ -73,7 +65,6 @@ function Upload({ db, storageService, user, navigate }) {
         }
       }
       //이미지 부분
-      console.log(pageId);
       const content = {
         title: title,
         text: textarea,
@@ -158,7 +149,9 @@ function Upload({ db, storageService, user, navigate }) {
           <figure>
             {preview.length !== 0
               ? preview.map(function (url, i) {
-                  return <img src={url} alt="" className="att" key={i}></img>;
+                  return (
+                    <img src={preview[i]} alt="" className="att" key={i} />
+                  );
                 })
               : null}
           </figure>

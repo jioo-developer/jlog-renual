@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Header from "./Header";
 import "../asset/detail.scss";
@@ -7,10 +7,13 @@ import TextareaAutosize from "react-textarea-autosize";
 import UseInput from "./hook/UseInput";
 function Detail({ user, navigate, dispatch, db, storageService }) {
   const location = useLocation();
-  const URLID = location.state.pageId;
+  const URLID =
+    location.state.pageId === null
+      ? new URLSearchParams(window.location.search)
+      : location.state.pageId;
   const [pageData, setPageData] = useState([]);
-  const [FavoriteBtn, setFavoriteBtn] = useState(false);
-  const [reply, setReply] = useState("");
+  const [favoriteBtn, setFavoriteBtn] = useState(false);
+  const [reply, setReply] = useState([]);
   const [comment, setcomment] = UseInput("");
   const [fileNamed, setFileNamed] = useState();
   const [commentChange, setCommentChange] = useState(false);
@@ -83,11 +86,41 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
     }
   }
 
+  function favoriteHandler(e) {
+    if (e.target.checked) {
+      db.collection("post")
+        .doc(URLID)
+        .update({
+          favorite: pageData.favorite + 1,
+        })
+        .then(() => {
+          setCookie("Cookie", "done", 1);
+          setFavoriteBtn(true);
+        });
+    }
+  }
+
+  const onchageComment = useCallback(
+    (e) => {
+      setcomment(e);
+    },
+    [comment]
+  );
+
+  const newComHandler = useCallback((e) => {
+    setNewComment(e);
+  });
+
   useEffect(() => {
     if (pageData.length !== 0) {
       setFileNamed(pageData.fileName);
     }
   }, [pageData]);
+
+  function edit_reply() {}
+  function edit_end() {}
+  function reply_delete() {}
+  function commentUpload() {}
 
   return (
     <div className="detail_wrap">
@@ -117,13 +150,9 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
         <section className="content_wrap">
           <pre className="text">{pageData.text}</pre>
           <div className="grid">
-            {/* {mapData
-              .filter((value, idx, arr) => {
-                return arr.findIndex((item) => item === value) === idx;
-              })
-              .map(function (url, i) {
-                return <img src={url} className="att" alt="" key={i} />;
-              })} */}
+            {pageData.map((value, index) => {
+              return <img src={value} className="att" alt="" key={index} />;
+            })}
           </div>
           <div className="comment">
             <div className="favorite_wrap">
@@ -131,21 +160,11 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
               <input
                 type="checkbox"
                 id="favorite_check"
-                // onClick={(e) => {
-                //   if (e.target.checked) {
-                //     db.collection("post")
-                //       .doc(쿼리스트링.get("id"))
-                //       .update({
-                //         favorite: pageData.favorite + 1,
-                //       })
-                //       .then(() => {
-                //         setCookie("Cookie", "done", 1);
-                //         setFavoriteBtn(true);
-                //       });
-                //   }
-                // }}
+                onClick={(e) => {
+                  favoriteHandler(e);
+                }}
               />
-              {/* {favoriteBtn !== true ? (
+              {favoriteBtn !== true ? (
                 <>
                   <label htmlFor="favorite_check" className="favorite_btn">
                     <span>👍</span>추천&nbsp;{pageData.favorite}
@@ -155,9 +174,9 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
                 <div className="favorite_btn">
                   <span>👍</span>추천&nbsp;{pageData.favorite}
                 </div>
-              )} */}
+              )}
             </div>
-            {/* {reply.map(function (com, i) {
+            {reply.map(function (com, index) {
               return (
                 <>
                   <div className="reply_wrap">
@@ -174,7 +193,7 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
                               <>
                                 <div
                                   className="edit btns"
-                                  data-index={i}
+                                  data-index={index}
                                   onClick={edit_reply}
                                 >
                                   수정
@@ -183,7 +202,7 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
                             ) : (
                               <div
                                 className="edit btns"
-                                data-index={i}
+                                data-index={index}
                                 onClick={edit_end}
                               >
                                 완료
@@ -191,7 +210,7 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
                             )}
                             <div
                               className="delete btns"
-                              data-index={i}
+                              data-index={index}
                               onClick={reply_delete}
                             >
                               삭제
@@ -201,34 +220,34 @@ function Detail({ user, navigate, dispatch, db, storageService }) {
                       ) : null}
                     </div>
                     <p
-                      className={`reply_text reply_text${i}`}
+                      className={`reply_text reply_text${index}`}
                       data-id={com.id}
-                      data-index={i}
+                      data-index={index}
                     >
                       {com.comment}
                     </p>
                     <input
                       type="text"
-                      className={`reply_input reply_input${i} form-control`}
+                      className={`reply_input reply_input${index} form-control`}
                       placeholder={com.comment}
-                      data-index={i}
+                      data-index={index}
                       data-id={com.id}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      onChange={newComHandler}
                     />
                   </div>
                 </>
               );
-            })} */}
-            {/* <form onSubmit={commentUpload}>
+            })}
+            <form onSubmit={commentUpload}>
               <TextareaAutosize
                 cacheMeasurements
                 onHeightChange={(height) => ""}
                 minRows={4}
                 className="comment_input"
-                onChange={(e) => setcomment(e.target.value)}
+                onChange={onchageComment}
               />
               <button className="btn">댓글 작성</button>
-            </form> */}
+            </form>
           </div>
         </section>
       </div>
