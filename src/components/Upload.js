@@ -10,8 +10,6 @@ function Upload({ db, storageService, user, navigate }) {
   const [preview, setPreview] = useState([]);
   const [pageId, setPageId] = useState("");
   const posts = useSelector((state) => state.posts);
-  let SaveArray = [];
-  let imageArray = [];
 
   const time = new Date();
 
@@ -41,11 +39,15 @@ function Upload({ db, storageService, user, navigate }) {
     const files = Array.from(e.target.files);
     if (files.length !== 0) {
       setFileData(files);
+      let SaveArray = [];
       for (var i = 0; i < files.length; i++) {
         const reader = new FileReader();
         reader.readAsDataURL(files[i]);
         reader.onload = (e) => {
           SaveArray.push(e.target.result);
+          let copyPreview = [...preview];
+          copyPreview.push(...SaveArray);
+          setPreview(copyPreview);
         };
       }
     }
@@ -53,6 +55,7 @@ function Upload({ db, storageService, user, navigate }) {
 
   async function post(e) {
     e.preventDefault(e);
+    let imageArray = [];
     if (title !== "" && textarea !== "") {
       if (preview.length !== 0) {
         for (var i = 0; i < preview.length; i++) {
@@ -83,7 +86,6 @@ function Upload({ db, storageService, user, navigate }) {
               }),
         order: maxPost - posts.length - 1,
       };
-      console.log(pageId);
 
       await db
         .collection("post")
